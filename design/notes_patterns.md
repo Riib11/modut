@@ -8,13 +8,13 @@
   non-zero number of times.  
 - The notation `?[...]` indicates that the contained phrase is optional.
 ```
-<kd> ::= *[ Type -> ] Type
+<kd> ::= * | * -> <kd>
 
 <ty1> ::= ∀ *[<ty-var>] ⇒ <ty>
 
 <ty> ::=
   | <ty-var>
-  | <tag> # <ty>
+  | <tag> <ty>
   | {*[<ty> ,]}
   | {*[<ty> |]}
   | <ty> → <ty>
@@ -23,81 +23,46 @@
 
 <tm> ::=
   | <tm-var>
-  | <tag>#<tm>
-  | <tm>.<tag>
+  | <tag> <tm>
   | {*[ <tm> , ]} 
-  | λ (<tm-var> : <ty>) ⇒ b
+  | λ{ *[ <pat> ⇒ <tm> | ] } 
   | <tm> <tm>
   | let <tm-var> : <ty> = <tm> in <tm>
   | let <ty-var> : <kd> = <ty> in <tm>
 
-<tag> ::= <tag-name>
+<pat> ::=
+  | <tm-var> : <ty>
+  | <tag> <pat>
+  | {*[ <pat> , ]}
+
+<tag> ::= #<tag-name>
 <ty-var> ::= <type-variable-name>
 <tm-var> ::= <term-var-name>
 ```
 
-Syntax sugar
-```text
-<tm> +::= λ{ *[ <pat> ⇒ <tm> | ] }
-
-<pat> ::=
-  | <tm-var> : <ty>
-  | <tag>#<pat>
-  | {*[ <pat> , ]}
-
-λ{ (x : A) ⇒ b }      ::= λ (x : A) ⇒ b
-λ{ t#p ⇒ b }          ::= λ (x : t#_) ⇒ λ{ p ⇒ b } x.t
-λ{ { [ pᵢ , ] } ⇒ b } ::= λ a ⇒ [ λ{ pᵢ ⇒ ] b [ } a ] 
-λ{ [ pᵢ ⇒ bᵢ | ] }    ::= { [ λ{ pᵢ ⇒ bᵢ } , ] }
-```
-
 Special features:
-- Polymorphism is *implicit*
-- No *pattern matching* in basic syntax
-  - can be achieved via conjunctions of annotated lambdas
-- Tag types and terms are special. They are uniquely identified by their tag.
-  - The `<tag>#<tm>` form "wraps", or "tags", a type or term.
-  - The `<tm>.<tag>` form "unwraps", or "untags", a tagged term.
-    - There is no type-level operation to untag a tagged type.
+- Projection from conjunctions is optional since uniquely-named conjuncts can be
+  distinguished.
+- Injection into disjunctions is options since this is checked by (sub-)typing.
+- Polymorphism is implicit
+- Patterns can only inspect labels and conjunctions/disjunctions.
 
 ```text
-Option = ∀ a ⇒ { None#{,} | Some#a }
-Nat = μ n ⇒ { Zero#{,} | Suc#n }
+Option = ∀ a ⇒ { #None {,} | #Some a }
+Nat = μ n ⇒ { #Zero {,} | #Suc n }
 
+pred_of_Nat : Nat → Option Nat = λ
+  { #Zero _ ⇒ #None {,}
+  | #Suc n ⇒ #Some n }
 
-// without syntax sugar
-pred_of_Nat =
-  { λ (_ : Zero#{,}) ⇒ None#{,} }
-  , λ (n : Suc#Nat) ⇒ Some#(n.Suc) }
-// with syntax sugar
-pred_of_Nat = λ
-  { Zero#{,} ⇒ None#{,}
-  , Suc#(n : Nat) ⇒ Some#n }
+pred_of_Nat : { #Z {,} → #None | #Suc Nat → #Some Nat }
+pred_of_Nat : { #Z {,} | #Suc Nat } → { #None | #Some Nat }
+pred_of_Nat : Nat → Option Nat
 
-pred_of_Nat : 
-  { Zero#{,} → None#{,} | Suc#Nat → Some#Nat } <:
-  { Zero#{,} | Suc#Nat } → { None#{,} | Some#Nat } =
-  Nat → Option Nat
-
-// without syntax sugar
-pred_of_Suc = λ (n : Suc Nat) ⇒ n.Suc#
-// with syntax sugar
-pred_of_Suc = λ{ Suc#(n : Nat) ⇒ n }
-
-pred_of_Suc :
-  Suc#Nat → Nat <:
-  Nat → Nat
+pred_of_Suc : Suc Nat -> Nat = λ 
 ```
 
-## Kinding
-
-```
-Γ , [ (Xᵢ : Type) ] ⊢ A : Type
----
-Γ ⊢ ∀ [ Xᵢ ] ⇒ A : [ Type → ] Type
-```
-
-## Subtyping
+## Typing
 
 Read `A <: A'` as "`A` is less general than `A'`. For example, `A` is less
 general than `{ A | B }`, and `{ A , B }` is less general than `A`.
@@ -118,13 +83,20 @@ _Intuition:_ if `A` is more specific that `A'`, then `a : A` implies that
 Γ ⊢ a : A'
 ```
 
-**Tagged type**
+**Tag**
+
+Type of tag.
+```
+Γ ⊢ a : A
+---
+#t(a) : #t(A)
+```
 
 Subtype under tag.
 ```
 Γ ⊢ A <: A'
 ---
-Γ ⊢ t#A <: t#A'
+Γ ⊢ #t(A) <: #t(A')
 ```
 
 **Arrow**
@@ -223,39 +195,34 @@ types of output.
 Γ ⊢ { [ Aᵢ -> Bᵢ | ] } <: { [ Aᵢ | ] } -> { [ Bᵢ , ] } // forall i
 ```
 
-**Type fixed point**
-
-TODO
-
-**Type application**
-
-## Typing
-
-**Tagged term**
-
-Type of tag.
-```
-Γ ⊢ a : A
----
-t#a : t#A
-```
-
-**Untagged term**
-
-Type of untag.
-```
-Γ ⊢ b : t#A
----
-b.t : A
-```
-
 **Abstraction**
 
-Abstraction.
+Abstraction over bind.
 ```
 Γ , (x : A) ⊢ b : B
 ---
-Γ ⊢ (λ (x : A) ⇒ b) : A → B
+Γ ⊢ λ{ (x : A) ⇒ b } : A → B
+```
+
+Abstraction over tag pattern.
+```
+Γ ⊢ λ{ p ⇒ b } : A → B
+---
+Γ ⊢ λ{ #t p ⇒ b } : #t A → B
+```
+
+Abstraction over conjunction pattern.
+```
+Γ ⊢ [ λ{ pᵢ ⇒ ] b [ } ] : [ Aᵢ → ] B
+---
+Γ ⊢ λ{ { [ pᵢ , ] } ⇒ b } : { [ Aᵢ , ] } → B
+```
+
+Abstraction over disjunction pattern.
+```
+[ Γ ⊢ λ{ pᵢ ⇒ bᵢ } ]
+---
+Γ ⊢ λ{ [ pᵢ ⇒ bᵢ | ] } : { [ Aᵢ → Bᵢ | ] }
 ```
 
 **Application**
@@ -267,32 +234,6 @@ Abstraction.
 Γ ⊢ f a : B
 ```
 
-**Conjunction**
-
-```
-[ Γ ⊢ aᵢ : Aᵢ ]
----
-Γ ⊢ { [ aᵢ , ] } : { [ Aᵢ , ] }
-```
-
-**Let-term**
-
-```
-Γ ⊢ a : A
-Γ , (a : A) ⊢ b : B
---- 
-Γ ⊢ let x : A = a in b : B
-```
-
-**Let-type**
-
-```
-Γ ⊢ X : K
-Γ , (X : K = A) ⊢ b : B
---- 
-Γ ⊢ let X : K = A in b : B
-```
-
 ## Normalization of Types
 
 **Theorem.** If `Γ ⊢ a : A` and `Γ ⊢ a' : A'` and `Γ ⊢ A ⇓ A'`, then 
@@ -301,16 +242,16 @@ or less specific.
 
 Transitivity.
 ```
-Γ ⊢ A ⇓ A'
-Γ ⊢ A' ⇓ A''
+Δ A ⇓ A'
+Δ ⊢ A' ⇓ A''
 ---
-Γ ⊢ A ⇓ A''
+Δ ⊢ A ⇓ A''
 ```
 
 Flatten conjunction/disjunction.
 ```
-Γ ⊢ { { [ Aᵢ , ] }, [ Aⱼ , ] } ⇓ { [ Aᵢ , ] [ Aⱼ , ] }
-Γ ⊢ { { [ Aᵢ | ] }, [ Aⱼ | ] } ⇓ { [ Aᵢ | ] [ Aⱼ | ] }
+Δ ⊢ { { [ Aᵢ , ] }, [ Aⱼ , ] } ⇓ { [ Aᵢ , ] [ Aⱼ , ] }
+Δ ⊢ { { [ Aᵢ | ] }, [ Aⱼ | ] } ⇓ { [ Aᵢ | ] [ Aⱼ | ] }
 ```
 
 Normalize under tag. TODO: write
@@ -319,7 +260,7 @@ Normalize under arrow. TODO: write
 
 Normalize under type application.
 ```
-Γ , (F = ∀ [ xᵢ ] ⇒ B) ⊢ F [ Aᵢ ] ⇓ B[ xᵢ ↦ Aᵢ ] 
+Δ , (F = ∀ [ xᵢ ] ⇒ B) ⊢ F [ Aᵢ ] ⇓ B[ xᵢ ↦ Aᵢ ] 
 ```
 
 TODO: more normalizations
@@ -337,9 +278,7 @@ for some `a'`.
 **Variable**
 
 ```
-∅
----
-Δ , (x = a) ⊢ x ⇓ a
+Δ ⊢ x val
 ```
 
 **Tag**
@@ -347,15 +286,7 @@ for some `a'`.
 ```
 Δ ⊢ a ⇓ a'
 ---
-Δ ⊢ t#a ⇓ t#a'
-```
-
-**Untag**
-
-```
-Δ ⊢ a ⇓ t#b
----
-Δ ⊢ a.t ⇓ b
+Δ ⊢ #t a ⇓ #t a'
 ```
 
 **Conjunction**
@@ -369,35 +300,48 @@ for some `a'`.
 **Abstraction**
 
 ```
-Δ ⊢ (λ (x : A) ⇒ b) val
+Δ ⊢ λ{ p ⇒ b } val
 ```
 
 **Application**
 
-Application of abstraction.
+Application of abstraction with bind pattern.
 ```
-Δ ⊢ f ⇓ (λ (x : A) ⇒ b)
+Δ ⊢ f ⇓ λ{ (x : A) ⇒ b }
 Δ ⊢ a ⇓ a'
 Δ ⊢ b[x ↦ a'] ⇓ b'
 ---
 Δ ⊢ f a ⇓ b'
 ```
 
+Application of abstraction with tag pattern.
+```
+Δ ⊢ f ⇓ λ{ #t p ⇒ c }
+Δ ⊢ a ⇓ #t b
+Δ ⊢ λ{ p ⇒ c } b ⇓ c'
+---
+Δ ⊢ f a ⇓ c'
+```
+
+Application of abstraction with conjunction pattern.
+```
+Δ ⊢ f ⇓ λ{ { [ pᵢ , ] } ⇒ c }
+Δ ⊢ a ⇓ { [ bᵢ , ] }
+Δ ⊢ [ λ{ pᵢ ⇒ ] c [ } bᵢ ] ⇓ c'
+---
+Δ ⊢ f a ⇓ c'
+```
+
 **Let-Term**
 
 ```
-Δ ⊢ a ⇓ a'
-Δ , (x = a') ⊢ b ⇓ b' 
----
-Δ ⊢ let x : A = a in b ⇓ b'
+TODO
 ```
 
 **Let-Type**
 
 ```
-Δ ⊢ b ⇓ b'
----
-Δ ⊢ let … : … = … in b ⇓ b'
+TODO
 ```
 
 
