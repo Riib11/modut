@@ -28,7 +28,7 @@
   | {*[ <tm> , ]} 
   | λ (<tm-var> : <ty>) ⇒ b
   | <tm> <tm>
-  | let <tm-var> : <ty> = <tm> in <tm>
+  | let <tm-var> : <ty1> = <tm> in <tm>
   | let <ty-var> : <kd> = <ty> in <tm>
 
 <tag> ::= <tag-name>
