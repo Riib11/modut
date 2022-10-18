@@ -28,7 +28,7 @@
   | λ{ *[ <pat> ⇒ <tm> | ] } 
   | <tm> <tm>
   | let <tm-var> : <ty> = <tm> in <tm>
-  | let type <ty-var> : <kd> = <ty> in <tm>
+  | let <ty-var> : <kd> = <ty> in <tm>
 
 <pat> ::=
   | <tm-var> : <ty>
@@ -48,16 +48,18 @@ Special features:
 - Patterns can only inspect labels and conjunctions/disjunctions.
 
 ```text
-let type Option = ∀ a ⇒ { #None {,} | #Some a }
-let type Nat = μ n ⇒ { #Zero {,} | #Suc n }
+Option = ∀ a ⇒ { #None {,} | #Some a }
+Nat = μ n ⇒ { #Zero {,} | #Suc n }
 
-let pred : Nat → Option Nat = λ
+pred_of_Nat : Nat → Option Nat = λ
   { #Zero _ ⇒ #None {,}
   | #Suc n ⇒ #Some n }
 
-pred : { #Z {,} → #None | #Suc Nat → #Some Nat }
-pred : { #Z {,} | #Suc Nat } → { #None | #Some Nat }
-pred : Nat → Option Nat
+pred_of_Nat : { #Z {,} → #None | #Suc Nat → #Some Nat }
+pred_of_Nat : { #Z {,} | #Suc Nat } → { #None | #Some Nat }
+pred_of_Nat : Nat → Option Nat
+
+pred_of_Suc : Suc Nat -> Nat = λ 
 ```
 
 ## Typing
@@ -81,7 +83,7 @@ _Intuition:_ if `A` is more specific that `A'`, then `a : A` implies that
 Γ ⊢ a : A'
 ```
 
-### Tag
+**Tag**
 
 Type of tag.
 ```
@@ -97,7 +99,7 @@ Subtype under tag.
 Γ ⊢ #t(A) <: #t(A')
 ```
 
-### Arrow
+**Arrow**
 
 Subtype under arrow.
 _Intuition:_ if `f : A → B` is a subtype of `f' : A' → B'`, then `f` handles
@@ -110,7 +112,7 @@ does.
 Γ ⊢ (A → B) <: (A' → B')
 ```
 
-### Conjunction
+**Conjunction**
 
 Subtype into singleton conjunction.
 ```
@@ -152,7 +154,7 @@ output.
 Γ ⊢ { [ Aᵢ -> Bᵢ , ] } <: { [ Aᵢ , ] } -> { [ Bᵢ | ] }
 ```
 
-### Disjunction
+**Disjunction**
 
 Subtype into singleton conjunction.
 ```
@@ -193,7 +195,7 @@ types of output.
 Γ ⊢ { [ Aᵢ -> Bᵢ | ] } <: { [ Aᵢ | ] } -> { [ Bᵢ , ] } // forall i
 ```
 
-### Abstraction
+**Abstraction**
 
 Abstraction over bind.
 ```
@@ -223,7 +225,7 @@ Abstraction over disjunction pattern.
 Γ ⊢ λ{ [ pᵢ ⇒ bᵢ | ] } : { [ Aᵢ → Bᵢ | ] }
 ```
 
-### Application
+**Application**
 
 ```
 Γ ⊢ f : A → B
@@ -232,29 +234,115 @@ Abstraction over disjunction pattern.
 Γ ⊢ f a : B
 ```
 
-## Normalization
+## Normalization of Types
 
-**Theorem.** If `a : A` and `a' : A'` and `A ⇓ A'`, then `a : A'` and `a' : A`.
-That is, normalization doesn't make a type more or less specific.
+**Theorem.** If `Γ ⊢ a : A` and `Γ ⊢ a' : A'` and `Γ ⊢ A ⇓ A'`, then 
+`Γ ⊢ a : A'` and `Γ ⊢ a' : A`. That is, normalization doesn't make a type more
+or less specific.
 
 Transitivity.
 ```
-A ⇓ A'
-A' ⇓ A''
+Δ A ⇓ A'
+Δ ⊢ A' ⇓ A''
 ---
-A ⇓ A''
+Δ ⊢ A ⇓ A''
 ```
 
 Flatten conjunction/disjunction.
 ```
-{ { [ A_i , ] }, [ A_j , ] } ⇓ { [ A_i , ] [ A_j , ] }
-{ { [ A_i | ] }, [ A_j | ] } ⇓ { [ A_i | ] [ A_j | ] }
+Δ ⊢ { { [ Aᵢ , ] }, [ Aⱼ , ] } ⇓ { [ Aᵢ , ] [ Aⱼ , ] }
+Δ ⊢ { { [ Aᵢ | ] }, [ Aⱼ | ] } ⇓ { [ Aᵢ | ] [ Aⱼ | ] }
 ```
 
 Normalize under tag. TODO: write
 Normalize under conjunction/disjunction. TODO: write
 Normalize under arrow. TODO: write
 
+Normalize under type application.
+```
+Δ , (F = ∀ [ xᵢ ] ⇒ B) ⊢ F [ Aᵢ ] ⇓ B[ xᵢ ↦ Aᵢ ] 
+```
+
 TODO: more normalizations
+
+## Normalization of Terms
+
+**Theorem.** _(Evaluation)_ If `∅ ⊢ a : A` and `∅ ⊢ a ⇓ a'` then `∅ ⊢ a' val`.
+
+**Theorem.** _(Type preservation)_ If `∅ ⊢ a : A` and `∅ ⊢ a ⇓ a'` then 
+`a' : A`.
+
+**Theorem.** _(Progress)_ If `∅ ⊢ a : A` then either `∅ ⊢ a val` or `∅ ⊢ a ⇓ a'`
+for some `a'`.
+
+**Variable**
+
+```
+Δ ⊢ x val
+```
+
+**Tag**
+
+```
+Δ ⊢ a ⇓ a'
+---
+Δ ⊢ #t a ⇓ #t a'
+```
+
+**Conjunction**
+
+```
+[ Δ ⊢ aᵢ ⇓ aᵢ' ]
+---
+Δ ⊢ { [ aᵢ , ] } ⇓ { [ aᵢ' , ] }
+```
+
+**Abstraction**
+
+```
+Δ ⊢ λ{ p ⇒ b } val
+```
+
+**Application**
+
+Application of abstraction with bind pattern.
+```
+Δ ⊢ f ⇓ λ{ (x : A) ⇒ b }
+Δ ⊢ a ⇓ a'
+Δ ⊢ b[x ↦ a'] ⇓ b'
+---
+Δ ⊢ f a ⇓ b'
+```
+
+Application of abstraction with tag pattern.
+```
+Δ ⊢ f ⇓ λ{ #t p ⇒ c }
+Δ ⊢ a ⇓ #t b
+Δ ⊢ λ{ p ⇒ c } b ⇓ c'
+---
+Δ ⊢ f a ⇓ c'
+```
+
+Application of abstraction with conjunction pattern.
+```
+Δ ⊢ f ⇓ λ{ { [ pᵢ , ] } ⇒ c }
+Δ ⊢ a ⇓ { [ bᵢ , ] }
+Δ ⊢ [ λ{ pᵢ ⇒ ] c [ } bᵢ ] ⇓ c'
+---
+Δ ⊢ f a ⇓ c'
+```
+
+**Let-Term**
+
+```
+TODO
+```
+
+**Let-Type**
+
+```
+TODO
+```
+
 
 
