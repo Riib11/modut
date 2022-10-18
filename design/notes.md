@@ -10,6 +10,8 @@
 ```
 <kd> ::= *[ Type -> ] Type
 
+// TODO: need to keep track of polarities? for the sake of subtyping? 
+// TODO: or, will this work out since let-type just makes an alias which is expanded during typechecking
 <ty1> ::= ∀ *[<ty-var>] ⇒ <ty>
 
 <ty> ::=
@@ -92,10 +94,52 @@ pred_of_Suc :
 
 ## Kinding
 
+Kinding type variable.
+```
+∅
+---
+Γ , (X : Type) ⊢ X : Type
+```
+
+Kinding abstraction.
 ```
 Γ , [ (Xᵢ : Type) ] ⊢ A : Type
 ---
 Γ ⊢ ∀ [ Xᵢ ] ⇒ A : [ Type → ] Type
+```
+
+Kinding application.
+```
+Γ ⊢ F = ∀ [ Xᵢ ] ⇒ A
+Γ ⊢ F : [ Type → ] Type
+[ Γ ⊢ Aᵢ : Type ]
+---
+Γ ⊢ F [ Aᵢ ] : Type
+```
+
+Kinding conjunction.
+```
+TODO
+```
+
+Kinding type disjunction.
+```
+TODO
+```
+
+Kinding arrow.
+```
+Γ ⊢ A : Type
+Γ ⊢ B : Type
+---
+Γ ⊢ A -> B : Type
+```
+
+Kinding fixed point.
+```
+Γ , (X : Type) ⊢ A : Type 
+---
+Γ ⊢ fix X => A : Type
 ```
 
 ## Subtyping
@@ -143,7 +187,7 @@ does.
 
 **Conjunction**
 
-Subtype into singleton conjunction.
+Subtype into singleton conjunction (Same as singleton disjunction).
 ```
 ∅
 ---
@@ -154,14 +198,14 @@ Subtype under conjunction.
 ```
 Γ ⊢ A <: A'
 ---
-Γ ⊢ { A , [ Aᵢ , ] } <: { A' , [ Aᵢ , ] }
+Γ ⊢ { A , B } <: { A' , B }
 ```
 
 Subtype weaken conjunction.
 ```
 ∅
 ---
-Γ ⊢ { A , [ Aᵢ , ] } <: { [ Aᵢ , ] }
+Γ ⊢ { A , B } <: { B }
 ```
 
 Subtype empty conjunction.
@@ -185,25 +229,25 @@ output.
 
 **Disjunction**
 
-Subtype into singleton conjunction.
+Subtype into singleton disjunction. (Same as singleton conjunction.)
 ```
 ∅
 ---
 Γ ⊢ A <: { A }
 ```
 
-Subtype under conjunction.
+Subtype under disjunction.
 ```
 Γ ⊢ A <: A'
 ---
-Γ ⊢ { A | [ Aᵢ | ] } <: { A' | [ Aᵢ | ] } // forall i
+Γ ⊢ { A | B } <: { A' | B }
 ```
 
-Subtype weaken conjunction.
+Subtype weaken disjunction.
 ```
 ∅
 ---
-Γ ⊢ { [ Aᵢ | ] } <: { A | [ Aᵢ | ] } // forall i
+Γ ⊢ { A } <: { A | B }
 ```
 
 Subtype empty conjunction.
@@ -221,14 +265,38 @@ types of output.
 ```
 ∅
 ---
-Γ ⊢ { [ Aᵢ -> Bᵢ | ] } <: { [ Aᵢ | ] } -> { [ Bᵢ , ] } // forall i
+Γ ⊢ { [ Aᵢ -> Bᵢ | ] } <: { [ Aᵢ | ] } -> { [ Bᵢ , ] }
 ```
 
-**Type fixed point**
+**Fixed point**
+
+Subtype under fixed point.
+```
+Γ (X = A) ⊢ A <: A'
+---
+Γ ⊢ fix X => A <: fix X => A'
+```
+This implies that unrolling a step of the fixed point makes the type more specific,
+making use of the substitution subtyping rule.
+For example
+```
+fix n => { Zero#{,} | Suc#{ Zero#{,} | Suc#n } } <:
+fix n => { Zero#{,} | Suc#n }
+```
+
+**Application**
 
 TODO
 
-**Type application**
+**Substitution**
+
+Subtype using substitution.
+TODO: is this ok, or does it break typechecking? 
+TODO: if this works, then typechecking can just use let-normal form
+```
+---
+Γ , (X = A) ⊢ A <: X
+```
 
 ## Typing
 
@@ -401,5 +469,22 @@ Application of abstraction.
 Δ ⊢ let … : … = … in b ⇓ b'
 ```
 
+## Unification
 
+The unifier type of two types is the most specific type that both types are subtypes of e.g.
 
+```
+Gamma |- A ~{U}~ B
+---
+Gamma |- A <: U
+Gamma |- B <: U
+Gamma |- forall U' if A <: U' and B <: U', then U <: U'
+```
+
+**Theorem.** For all types `A` and `B`, exists `C` such that `A ~{C}~ B`.
+
+TODO: unification rules
+
+## Typechecker Algorithm
+
+TODO
