@@ -29,7 +29,7 @@
   | λ (<tm-var> : <ty>) ⇒ b
   | <tm> <tm>
   | let <tm-var> : <ty1> = <tm> in <tm>
-  | let <ty-var> : <kd> = <ty> in <tm>
+  | let <ty-var> : <kd> = <ty1> in <tm>
 
 <tag> ::= <tag-name>
 <ty-var> ::= <type-variable-name>
@@ -60,6 +60,7 @@ Special features:
   - The `<tm>.<tag>` form "unwraps", or "untags", a tagged term.
     - There is no type-level operation to untag a tagged type.
 
+**Examples**
 ```text
 Option = ∀ a ⇒ { None#{,} | Some#a }
 Nat = μ n ⇒ { Zero#{,} | Suc#n }
