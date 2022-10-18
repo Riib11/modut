@@ -1,5 +1,25 @@
 # Modut
 
+## Restrictions
+
+No higher-kinded polymorphism
+- Higher-kinded polymorphism would require keeping track of polarity constraints
+  on higher-kinded type variables
+
+Tuple fields must be named (tagged).
+- It's better etiquette anyway
+- The flattening and unordering of conjunctions is important to many subtyping
+  features, so its cumbersome to add ordered tuples as a basic language feature
+  rather than just as a type alias i.e.
+  `Tuple3 = forall a b c => { Field1#a , Field2#b , Field3#c }`.
+
+No basic datatypes i.e. `data Nat = ...`
+- Tags, conjunctions, disjunctions, and fixed points allow for the full
+  expressiveness (and more) of _regular types_, which has been recognized as a
+  reasonable basis for a polymorphic datatype system.
+- Named datatypes are just type aliases. Let-normal form keeps track of the
+  named given in type aliases to ensure nice-looking error messages.
+
 ## Syntax
 
 - The notation `*[...]` indicates that the contained phrase can be repeated any number of
