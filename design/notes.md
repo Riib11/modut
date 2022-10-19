@@ -22,7 +22,7 @@ Tuple fields must be named (tagged).
   `Tuple3 = forall a b c => { Field1#a , Field2#b , Field3#c }`.
 
 No basic datatypes i.e. `data Nat = ...`
-- Tags, conjunctions, disjunctions, and fixed points allow for the full
+- Tags, conjunctions, disjunctions, and fixpoints allow for the full
   expressiveness (and more) of _regular types_, which has been recognized as a
   reasonable basis for a polymorphic datatype system.
 - Named datatypes are just type aliases. Let-normal form keeps track of the
@@ -163,7 +163,7 @@ Kinding arrow.
 Γ ⊢ A -> B : Type
 ```
 
-Kinding fixed point.
+Kinding fixpoint.
 ```
 Γ , (X : Type) ⊢ A : Type 
 ---
@@ -296,15 +296,15 @@ types of output.
 Γ ⊢ { [ Aᵢ -> Bᵢ | ] } <: { [ Aᵢ | ] } -> { [ Bᵢ , ] }
 ```
 
-**Fixed point**
+**Fixpoint**
 
-Subtype under fixed point.
+Subtype under fixpoint.
 ```
 Γ (X = A) ⊢ A <: A'
 ---
 Γ ⊢ fix X => A <: fix X => A'
 ```
-This implies that unrolling a step of the fixed point makes the type more specific,
+This implies that unrolling a step of the fixpoint makes the type more specific,
 making use of the substitution subtyping rule.
 For example
 ```
@@ -404,11 +404,35 @@ Transitivity.
 Γ ⊢ A ⇓ A''
 ```
 
+Overall goal: convert nested conjunctions/disjunctions to CNF.
+
 Flatten conjunction/disjunction.
 ```
-Γ ⊢ { { [ Aᵢ , ] }, [ Aⱼ , ] } ⇓ { [ Aᵢ , ] [ Aⱼ , ] }
-Γ ⊢ { { [ Aᵢ | ] }, [ Aⱼ | ] } ⇓ { [ Aᵢ | ] [ Aⱼ | ] }
+Γ ⊢ { { A , B } , C } ⇓ { A , B , C }
+Γ ⊢ { { A | B } | C } ⇓ { A | B | C }
 ```
+
+Distribute disjunction over conjunction.
+```
+Γ ⊢ { A | { B , C } } ⇓ { { A | B } , { A , C } }
+```
+
+TODO: do i actually want to distribute these? It seems yes because you can go
+one way but not the other, so if you want to normalize you have to go this way.
+
+Distribute tag over conjunction/disjunction.
+```
+Γ ⊢ t#{ A , B } ⇓ { t#A , t#B }
+Γ ⊢ t#{ A | B } ⇓ { t#A | t#B }
+```
+
+Distribute arrow over conjunction/disjunction.
+```
+Γ ⊢ A → { B , C } ⇓ { { A → B } , { A → C } }
+Γ ⊢ A → { B | C } ⇓ { { A → B } | { A → C } }
+```
+
+NOTE: cannot distribute fixedpoint over conjunction/disjunction.
 
 Normalize under tag. TODO: write
 Normalize under conjunction/disjunction. TODO: write
