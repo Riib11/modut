@@ -1,2 +1,9 @@
 # modut
-A statically typed functional programming language with structural refinement types and modular data types.
+
+A programming language with...
+- functional
+- statically typed
+- substructurally typed (subtypes)
+- conjunctions/disjunctions of types
+- tagged types
+- [structural refinement types][struct-ref-types-tyde2022]

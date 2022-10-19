@@ -1,5 +1,13 @@
 # Modut
 
+A programming language with...
+- functional
+- statically typed
+- substructurally typed (subtypes)
+- conjunctions/disjunctions of types
+- tagged types
+- [structural refinement types][struct-ref-types-tyde2022]
+
 ## Restrictions
 
 No higher-kinded polymorphism
@@ -508,3 +516,9 @@ TODO: unification rules
 ## Typechecker Algorithm
 
 TODO
+
+
+
+## Resources
+
+[struct-ref-types-tyde2022]: https://ps.cs.uni-tuebingen.de/publications/binder22refinement.pdf
