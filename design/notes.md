@@ -299,6 +299,7 @@ types of output.
 **Fixpoint**
 
 Subtype under fixpoint.
+TODO: this isn't quite right...
 ```
 Γ (X = A) ⊢ A <: A'
 ---
