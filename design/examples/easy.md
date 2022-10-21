@@ -1,3 +1,5 @@
+# Example: Easy
+
 Except
 ```ml
 let Result = ∀ a ⇒ { a | Exception#String }
@@ -80,3 +82,5 @@ let head_partial = λ
   { Nil#{,} ⇒ Undefined#{,}
   , Cons#{ Head#a , Tail#_ } ⇒ a }
 ```
+
+

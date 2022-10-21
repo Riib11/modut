@@ -57,6 +57,7 @@ No basic datatypes i.e. `data Nat = ...`
   | <tm>.<tag>
   | {*[ <tm> , ]} 
   | λ (<tm-var> : <ty>) ⇒ b
+  | μ <tm-var> ⇒ <tm>
   | <tm> <tm>
   | let <tm-var> : <ty1> = <tm> in <tm>
   | let <ty-var> : <kd> = <ty1> in <tm>
@@ -391,6 +392,14 @@ Abstraction.
 Γ ⊢ let X : K = A in b : B
 ```
 
+**Fixpoint**
+
+```
+Γ , (x : TODO) ⊢ b : B
+Γ ⊢ μ x ⇒ b : B
+```
+
+
 ## Normalization of Types
 
 **Theorem.** If `Γ ⊢ a : A` and `Γ ⊢ a' : A'` and `Γ ⊢ A ⇓ A'`, then 
@@ -527,11 +536,11 @@ Application of abstraction.
 The unifier type of two types is the most specific type that both types are subtypes of e.g.
 
 ```
-Gamma |- A ~{U}~ B
+Γ ⊢ A ~{U}~ B
 ---
-Gamma |- A <: U
-Gamma |- B <: U
-Gamma |- forall U' if A <: U' and B <: U', then U <: U'
+Γ ⊢ A <: U
+Γ ⊢ B <: U
+Γ ⊢ forall U' if A <: U' and B <: U', then U <: U'
 ```
 
 **Theorem.** For all types `A` and `B`, exists `C` such that `A ~{C}~ B`.

@@ -1,3 +1,5 @@
+# Example: Sort
+
 Goals:
 - define type of sorted lists
 - prove that function sorts a list
