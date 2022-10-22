@@ -30,10 +30,8 @@ No basic datatypes i.e. `data Nat = ...`
 
 ## Syntax
 
-- The notation `*[...]` indicates that the contained phrase can be repeated any number of
-  times (including 0 times).
-- The notation `+[...]` indicates that the contained phrase can be repeated any
-  non-zero number of times.  
+- The notation `*[...]` indicates that the contained phrase can be repeated any
+  number of times (including 0 times).
 - The notation `?[...]` indicates that the contained phrase is optional.
 ```
 <kd> ::= *[ Type -> ] Type
@@ -262,6 +260,7 @@ Subtype into singleton disjunction. (Same as singleton conjunction.)
 ```
 ∅
 ---
+Zero = Zero#{,}
 Γ ⊢ A <: { A }
 ```
 
