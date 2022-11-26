@@ -62,7 +62,7 @@ No basic datatypes i.e. `data Nat = ...`
 
 <tag> ::= <tag-name>
 <ty-var> ::= <type-variable-name>
-<tm-var> ::= <term-var-name>
+<tm-var> ::= <term-variable-name>
 ```
 
 Syntax sugar
@@ -532,26 +532,32 @@ Application of abstraction.
 
 ## Unification
 
-The unifier type of two types is the most specific type that both types are subtypes of e.g.
+The unifier type of two types is the most specific type that both types are subtypes of i.e.
 
 ```
-Γ ⊢ A ~{U}~ B
+Γ ⊢ A ~{C}~ B
 ---
-Γ ⊢ A <: U
-Γ ⊢ B <: U
-Γ ⊢ forall U' if A <: U' and B <: U', then U <: U'
+Γ ⊢ A <: C
+Γ ⊢ B <: C
+Γ ⊢ forall C', A <: C' and B <: C' implies C <: C'
 ```
 
-**Theorem.** For all types `A` and `B`, exists `C` such that `A ~{C}~ B`.
+**The bottom type**. The empty disjunction type, `[|]`, is the _bottom_ type
+and has no inhabitants. `forall A, [|] <: A`.
 
-TODO: unification rules
+**The top type**. The empty conjunction type, `[,]`, is the _top_ type i.e. and
+has one (trivial) inhabitant. `forall A, A <: [,]`.
+
+**Lemma.** For all types `A` and `B`, exists `C` such that `A ~{C}~ B`.
+**Proof**. In the worse case, `A ~{ [|] }~ B`. In the best case `A ~{ A } B` or
+`A ~{ B }~ B`. TODO: full proof.
 
 ## Typechecker Algorithm
 
 TODO
 
-
-
 ## Resources
+
+- [Structural Refinement Types][struct-ref-types-tyde2022]
 
 [struct-ref-types-tyde2022]: https://ps.cs.uni-tuebingen.de/publications/binder22refinement.pdf
